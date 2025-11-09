@@ -1,98 +1,69 @@
-#ifndef __LSERVER_LOG_H__
-#define __LSERVER_LOG_H__
-
-#include <string>
-#include <cstdint>
+#include "log.h"
 
 namespace LServer
 {
-    class LogEvent
+    Logger::Logger(const std::string &name) : m_name(name)
     {
-    public:
-        typedef std::shared_ptr<LogEvent> ptr;
-        LogEvent();
+    }
 
-    private:
-        const char *m_file = nullptr; // 文件名
-        int32_t m_line = 0;           // 行号
-        uint32_t m_elapse = 0;        // 程序启动开始到现在的毫秒数
-        int32_t m_threadId = 0;       // 线程 Id
-        uint32_t m_fiberId = 0;       // 协程 Id
-        std::string m_content;        // 消息
-        uint64_t m_time;              // 时间戳
-    };
-
-    // 日志级别类
-    class LogLevel
+    void log(LogLevel::Level level, LogEvent::ptr event)
     {
-    public:
-        // 日志级别
-        enum Level
+        if (level >= m_level)
         {
-            DEBUG = 1,
-            INFO = 2,
-            WARN = 3,
-            ERROR = 4,
-            FATAL = 5
-        };
-    };
+            for (auto &i : m_appenders)
+            {
+                i->log(level, event);
+            }
+        }
+    }
 
-    // 日志格式器
-    class LogFormatter
+    void debug(LogEvent::ptr event)
     {
-    public:
-        typedef std::shared_ptr<LogFormatter> ptr;
-        std::string format(LogEvent::ptr event);
-
-    private:
-    };
-
-    // 日志输出
-    class LogAppender
+        log(LogLevel::DEBUG, event);
+    }
+    void info(LogEvent::ptr event)
     {
-    public:
-        typedef std::shared_ptr<LogAppender> ptr;
-        virtual ~LogAppender() {}
-        void log(LogLevel::Level level, LogEvent::ptr event);
-
-    private:
-        LogLevel::Level m_level;
-    };
-
-    // 日志器
-    class Logger
+        log(LogLevel::INFO, event);
+    }
+    void warn(LogEvent::ptr event)
     {
-    public:
-        typedef std::shared_ptr<Logger> ptr;
-
-        Logger(const std::string &name = "root");
-
-        void log(LogLevel::Level level, LogEvent::ptr event);
-
-    private:
-        std::string m_name;
-        LogLevel::Level m_level;
-        LogAppender::ptr p;
-    };
-
-    // 输出到控制台的 Appender
-    class StdoutLogAppender : public LogAppender
+        log(LogLevel::WARN, event);
+    }
+    void error(LogEvent::ptr event)
     {
-    };
-
-    // 定义输出到文件的 Appender
-    class FileLogAppender : public LogAppender
+        log(LogLevel::ERROR, event);
+    }
+    void fatal(LogEvent::ptr event)
     {
-    };
+        log(LogLevel::FATAL, event);
+    }
 
+    void Logger::addAppender(LogAppender::ptr appender)
+    {
+        m_appenders.push_back(appender);
+    }
+    void Logger::delAppender(LogAppender::ptr appender)
+    {
+        for (auto it = m_appenders.begin(); it != m_appenders.end(); ++it)
+        {
+            if (*it == appender)
+            {
+                m_appenders.erase(it);
+                break;
+            }
+        }
+    }
 }
 
-#endif
-
 /**
- * g++ log.cpp, 编译 + 链接
- *  1. 编译阶段：把 log.cpp 编译为目标文件。
- *  2. 链接阶段：默认尝试生成可执行文件，并寻找入口函数 main()。
  *
- * g++ -c log.cpp, 只编译, 不连接
+ *
+ * 一、成员初始化列表
+ * Logger::Logger(const std::string &name) : m_name(name){}
+ *
+ *
+ *
+ *
+ *
+ *
  */
