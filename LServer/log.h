@@ -4,6 +4,8 @@
 #include <string>
 #include <cstdint>
 #include <list>
+#include <sstream>
+#include <fstream>
 
 namespace LServer
 {
@@ -55,10 +57,14 @@ namespace LServer
     public:
         typedef std::shared_ptr<LogAppender> ptr;
         virtual ~LogAppender() {}
-        void log(LogLevel::Level level, LogEvent::ptr event);
+        // 纯虚函数
+        virtual void log(LogLevel::Level level, LogEvent::ptr event) = 0;
+        void setFormatter(LogFormatter::ptr val) { m_formatter = val; }
+        LogFormatter::ptr getFormatter() const { return m_formatter; }
 
-    private:
+    protected:
         LogLevel::Level m_level;
+        LogFormatter::ptr m_formatter; // 设置日志输出格式
     };
 
     // 日志器
@@ -91,11 +97,26 @@ namespace LServer
     // 输出到控制台的 Appender
     class StdoutLogAppender : public LogAppender
     {
+    public:
+        typedef std::shared_ptr<StdoutLogAppender> ptr;
+        // override关键字是现代C++（C++11及以上）中的最佳实践，它能帮助编译器检查重写是否正确，提高代码的安全性和可读性。
+        // 告诉编译器这个函数是重写父类的函数
+        virtual void log(LogLevel::Level level, LogEvent::ptr event) override;
+
+    private:
     };
 
     // 定义输出到文件的 Appender
     class FileLogAppender : public LogAppender
     {
+    public:
+        typedef std::shared_ptr<FileLogAppender> ptr;
+        FileLogAppender(const std::string &filename);
+        virtual void log(LogLevel::Level level, LogEvent::ptr event) override;
+
+    private:
+        std::string m_name;
+        std::ofstream m_filestream;
     };
 
 }
@@ -125,6 +146,15 @@ namespace LServer
  * 四、常量成员函数
  * LogLevel::Level getLevel() const { return m_level; }
  * 这个函数不会修改档当前对象的成员变量
+ *
+ *
+ *
+ * 五、<sstream> 是 C++ 标准库中的头文件，提供了字符串流（string stream）的功能。它允许你像使用输入/输出流一样来处理字符串。
+ * 主要类:
+ * 1. std::stringstream
+ * 2. std::istringstream
+ * 3. std::ostringstream
+ * 总结: <sstream> 提供了强大的字符串处理能力，特别适合需要将各种数据类型组合成复杂字符串的场景，比如日志系统、数据序列化等。
  *
  *
  */
