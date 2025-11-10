@@ -37,6 +37,19 @@ namespace LServer
     {
         log(LogLevel::FATAL, event);
     }
+    FileLogAppender::FileLogAppender(const std::string &filename)
+    {
+    }
+    void FileLogAppender::log(LogLevel::Level level, LogEvent::ptr event)
+    {
+    }
+    void StdoutLogAppender::log(LogLevel::Level level, LogEvent::ptr event)
+    {
+        if (level >= m_level)
+        {
+            std::cout << m_formatter.format(event);
+        }
+    }
 
     void Logger::addAppender(LogAppender::ptr appender)
     {
